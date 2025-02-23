@@ -1,5 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Persons.API.Database;
+using Persons.API.Services;
+using Persons.API.Services.Interfaces;
 using Scalar.AspNetCore;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -10,6 +12,8 @@ builder.Services.AddDbContext<PersonsDbContext>(options =>
 
 builder.Services.AddControllers();
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
+
+builder.Services.AddTransient<IPersonsService, PersonsServices>();
 builder.Services.AddOpenApi();
 
 var app = builder.Build();
