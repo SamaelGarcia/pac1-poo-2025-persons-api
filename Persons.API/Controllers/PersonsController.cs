@@ -60,6 +60,14 @@ namespace Persons.API.Controllers
             });
         }
 
+        [HttpGet("{id}")]
+        public async Task<ActionResult<ResponseDto<PersonActionResponseDto>>> GetOne(Guid id)
+        {
+            var response = await _personsService.GetOneByIdAsync(id);
+
+            return StatusCode(response.StatusCode, response);
+        }
+
         //[HttpPut("{DNI}")]
         //public IActionResult Put(string DNI, [FromBody] PersonEntity person)
         //{

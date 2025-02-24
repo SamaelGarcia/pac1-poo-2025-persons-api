@@ -20,6 +20,9 @@ namespace Persons.API.Dtos.Persons
         [StringLength(13, MinimumLength = 13, ErrorMessage = "El campo {0} debe tener un minimo de {2} y un maximo de {1} caracteres")]
         public string DNI { get; set; }
 
+        [Display(Name = "Genero")]
+        [Required(ErrorMessage =" El campo {0} es obligatorio")]
+        [StringLength(1, ErrorMessage = "El {0} solo acepta {1} caracter")]
         public string Gender { get; set; }
     }
 }

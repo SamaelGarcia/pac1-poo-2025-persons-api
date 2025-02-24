@@ -1,4 +1,5 @@
-﻿using Persons.API.Constants;
+﻿using Microsoft.EntityFrameworkCore;
+using Persons.API.Constants;
 using Persons.API.Database;
 using Persons.API.Database.Entities;
 using Persons.API.Dtos.Common;
@@ -14,6 +15,63 @@ namespace Persons.API.Services
         public PersonsServices(PersonsDbContext context)
         {
             _context = context;
+        }
+
+        public async Task<ResponseDto<List<PersonDto>>> GetListAsync()
+        {
+            var personEntity = await _context.Persons.ToListAsync();
+
+            var personsDto = new List<PersonDto>();
+            foreach (var person in personEntity)
+            {
+                personsDto.Add(new PersonDto
+                {
+                    Id = person.Id,
+                    FirstName = person.FirstName,
+                    LastName = person.LastName,
+                    DNI = person.DNI,
+                    Gender = person.Gender,
+                });
+            }
+
+            return new ResponseDto<List<PersonDto>>
+            {
+                StatusCode = HttpStatusCode.OK,
+                Status = true,
+                Message = personEntity.Count() > 0 ? "Registros Encontrados" : "No se encontraron registros",
+                Data = personsDto
+            };
+        }
+
+        public async Task<ResponseDto<PersonDto>> GetOneByIdAsync(Guid id)
+        {
+            var personEntity = await _context.Persons.
+                FirstOrDefaultAsync(person => person.Id == id);
+
+            if(personEntity == null)
+            {
+                return new ResponseDto<PersonDto>
+                {
+                    StatusCode = HttpStatusCode.NOT_FOUND,
+                    Status = false,
+                    Message = "Registro no encontrado"
+                };
+            }
+
+            return new ResponseDto<PersonDto>
+            {
+                StatusCode = HttpStatusCode.OK,
+                Status = true,
+                Message = "Registro encontrado",
+                Data = new PersonDto
+                {
+                    Id = personEntity.Id,
+                    FirstName = personEntity.FirstName,
+                    LastName = personEntity.LastName,
+                    DNI = personEntity.DNI,
+                    Gender = personEntity.Gender,
+                }
+            };
         }
         public async Task<ResponseDto<PersonActionResponseDto>> CreateAsync(PersonCreateDto dto)
         {
