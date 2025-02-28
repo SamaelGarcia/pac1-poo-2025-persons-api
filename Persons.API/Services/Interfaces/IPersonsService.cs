@@ -7,6 +7,9 @@ namespace Persons.API.Services.Interfaces
     public interface IPersonsService
     {
         Task<ResponseDto<PersonActionResponseDto>> CreateAsync(PersonCreateDto person);
+        Task<ResponseDto<PersonActionResponseDto>> DeleteAsync(Guid id);
+        Task<ResponseDto<PersonActionResponseDto>> EditAsync(PersonEditDto dto, Guid id);
+        Task<ResponseDto<List<PersonDto>>> GetListAsync();
         Task<ResponseDto<PersonDto>> GetOneByIdAsync(Guid id);
     }
 }

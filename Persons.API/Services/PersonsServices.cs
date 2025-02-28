@@ -73,6 +73,7 @@ namespace Persons.API.Services
                 }
             };
         }
+
         public async Task<ResponseDto<PersonActionResponseDto>> CreateAsync(PersonCreateDto dto)
         {
             var personEntity = new PersonEntity
@@ -98,6 +99,72 @@ namespace Persons.API.Services
                 Status = true,
                 Message = "Registro creado correctamente",
                 Data = response
+            };
+        }
+
+        public async Task<ResponseDto<PersonActionResponseDto>> EditAsync(PersonEditDto dto, Guid id)
+        {
+            var personEntity = await _context.Persons.FirstOrDefaultAsync(x => x.Id == id);
+
+            if (personEntity is null)
+            {
+                return new ResponseDto<PersonActionResponseDto>
+                {
+                    StatusCode = HttpStatusCode.NOT_FOUND,
+                    Status = false,
+                    Message = "Registro no encontrado"
+                };
+            }
+
+            personEntity.FirstName = dto.FirstName;
+            personEntity.LastName = dto.LastName;
+            personEntity.DNI = dto.DNI;
+            personEntity.Gender = dto.Gender;
+
+            _context.Persons.Update(personEntity);
+            await _context.SaveChangesAsync();
+
+            return new ResponseDto<PersonActionResponseDto>
+            {
+                StatusCode = HttpStatusCode.OK,
+                Status = true,
+                Message = "Registro editado correctamente",
+                Data = new PersonActionResponseDto
+                {
+                    Id = personEntity.Id,
+                    FirstName = dto.FirstName,
+                    LastName =  dto.LastName,
+                }
+            };
+        }
+
+        public async Task<ResponseDto<PersonActionResponseDto>> DeleteAsync(Guid id)
+        {
+            var personEntity = await _context.Persons.FirstOrDefaultAsync(x => x.Id == id);
+
+            if (personEntity is null)
+            {
+                return new ResponseDto<PersonActionResponseDto>
+                {
+                    StatusCode = HttpStatusCode.NOT_FOUND,
+                    Status = false,
+                    Message = "Registro no encontrado",
+                };
+            }
+            _context.Persons.Remove(personEntity);
+            await _context.SaveChangesAsync();
+
+            return new ResponseDto<PersonActionResponseDto>
+            {
+                StatusCode = HttpStatusCode.OK,
+                Status = true,
+                Message = "Registro eliminado correctamente",
+                Data = new PersonActionResponseDto
+                {
+                    Id = personEntity.Id,
+                    FirstName = personEntity.FirstName,
+                    LastName = personEntity.LastName,
+                }
             };
         }
     }

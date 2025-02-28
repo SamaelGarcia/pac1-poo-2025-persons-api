@@ -46,6 +46,19 @@ namespace Persons.API.Controllers
         //    return Ok(_persons.Where(x => x.DNI == DNI).FirstOrDefault());
         //}
 
+        [HttpGet]
+        public async Task<ActionResult<ResponseDto<List<PersonDto>>>> GetList()
+        {
+            var response = await _personsService.GetListAsync();
+
+            return StatusCode (response.StatusCode, new
+            {
+                response.Status,
+                response.Message,
+                response.Data
+            });
+        }
+
         [HttpPost]
         public async Task<ActionResult<ResponseDto<PersonActionResponseDto>>> Post([FromBody]PersonCreateDto dto)
         {
@@ -65,6 +78,21 @@ namespace Persons.API.Controllers
         {
             var response = await _personsService.GetOneByIdAsync(id);
 
+            return StatusCode(response.StatusCode, response);
+        }
+
+        [HttpPut("{id}")]
+        public async Task<ActionResult<ResponseDto<PersonActionResponseDto>>> Edit([FromBody]PersonEditDto dto, Guid id)
+        {
+            var response = await _personsService.EditAsync(dto, id);
+
+            return StatusCode(response.StatusCode, response);
+        }
+
+        [HttpDelete("{id}")]
+        public async Task<ActionResult<ResponseDto<PersonActionResponseDto>>> Delete(Guid id)
+        {
+            var response = await _personsService.DeleteAsync(id);
             return StatusCode(response.StatusCode, response);
         }
 
