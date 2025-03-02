@@ -53,7 +53,7 @@ namespace Persons.API.Services
             var personEntity = await _context.Persons.
                 FirstOrDefaultAsync(person => person.Id == id);
 
-            if(personEntity == null)
+            if (personEntity == null)
             {
                 return new ResponseDto<PersonDto>
                 {
@@ -93,6 +93,17 @@ namespace Persons.API.Services
 
             var personEntity = _mapper.Map<PersonEntity>(dto);
 
+            var countryEntity = await _context.Countries.FirstOrDefaultAsync(c => c.Id == dto.CountryId);
+            if (countryEntity == null)
+            {
+                return new ResponseDto<PersonActionResponseDto>
+                {
+                    StatusCode = HttpStatusCode.BAD_REQUEST,
+                    Status = false,
+                    Message = "El pais no existe en la base de datos"
+                };
+            }
+
             _context.Persons.Add(personEntity);
             await _context.SaveChangesAsync();
 
@@ -124,6 +135,17 @@ namespace Persons.API.Services
                     StatusCode = HttpStatusCode.NOT_FOUND,
                     Status = false,
                     Message = "Registro no encontrado"
+                };
+            }
+
+            var countryEntity = await _context.Countries.FirstOrDefaultAsync(c => c.Id == dto.CountryId);
+            if (countryEntity == null)
+            {
+                return new ResponseDto<PersonActionResponseDto>
+                {
+                    StatusCode = HttpStatusCode.BAD_REQUEST,
+                    Status = false,
+                    Message = "El pais no existe en la base de datos"
                 };
             }
 

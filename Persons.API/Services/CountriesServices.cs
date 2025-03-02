@@ -117,6 +117,19 @@ namespace Persons.API.Services
                 };
             }
 
+            var personsInCountry = await _context.Persons
+                .CountAsync(p => p.CountryId == countryEntity.Id);
+
+            if(personsInCountry > 0)
+            {
+                return new ResponseDto<CountryActionResponseDto>
+                {
+                    StatusCode = HttpStatusCode.BAD_REQUEST,
+                    Status = false,
+                    Message = "El pais tiene datos relacionados."
+                };
+            }
+
             _context.Countries.Remove(countryEntity);
 
             await _context.SaveChangesAsync();
