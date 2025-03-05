@@ -16,26 +16,76 @@ namespace Persons.API.Services
         private readonly PersonsDbContext _context;
         private readonly IMapper _mapper;
 
-        public CountriesServices(PersonsDbContext personsDbContext, IMapper mapper)
+        private readonly int PAGE_SIZE;
+        private readonly int PAGE_SIZE_LIMIT;
+
+        public CountriesServices(PersonsDbContext personsDbContext, IMapper mapper, IConfiguration configuration)
         {
             _context = personsDbContext;
             _mapper = mapper;
+
+            PAGE_SIZE = configuration.GetValue<int>("PageSize");
+            PAGE_SIZE_LIMIT = configuration.GetValue<int>("PageSizeLimit");
+
         }
 
-        public async Task<ResponseDto<List<CountryDto>>> GetListAsync()
+        //public async Task<ResponseDto<List<CountryDto>>> GetListAsync()
+        //{
+        //    var countries = await _context.Countries.OrderBy(x => x.AlphaCode3).ToListAsync();
+
+        //    var countriesDtos = _mapper.Map<List<CountryDto>>(countries);
+
+        //    return new ResponseDto<List<CountryDto>>
+        //    {
+        //        StatusCode = HttpStatusCode.OK,
+        //        Status = true,
+        //        Message = "Registros obtenidos correctamente",
+        //        Data = countriesDtos
+        //    };
+        //}
+
+        public async Task<ResponseDto<PaginationDto<List<CountryDto>>>> GetListAsync(
+            string searchTerm = "", int page = 1, int pageSize = 0
+            )
         {
-            var countries = await _context.Countries.OrderBy(x => x.AlphaCode3).ToListAsync();
+            //var countries = await _context.Countries.OrderBy(x => x.AlphaCode3).ToListAsync();
+            pageSize = pageSize == 0 ? PAGE_SIZE : pageSize;
+            int startIndex = (page - 1) * pageSize;
+            IQueryable<CountryEntity> countriesQuery = _context.Countries;
 
-            var countriesDtos = _mapper.Map<List<CountryDto>>(countries);
+            if (!string.IsNullOrEmpty(searchTerm))
+            {
+                countriesQuery = countriesQuery.
+                    Where(x => (x.Name + " " + x.AlphaCode3).Contains(searchTerm));
+            }
+            int totalRows = await countriesQuery.CountAsync();
+            var countriesEntity = await countriesQuery
+                .OrderBy(x => x.Name)
+                .Skip(startIndex)
+                .Take(pageSize)
+                .ToListAsync();
 
-            return new ResponseDto<List<CountryDto>>
+            var countriesDtos = _mapper.Map<List<CountryDto>>(countriesEntity);
+
+            return new ResponseDto<PaginationDto<List<CountryDto>>>
             {
                 StatusCode = HttpStatusCode.OK,
                 Status = true,
                 Message = "Registros obtenidos correctamente",
-                Data = countriesDtos
+                Data = new PaginationDto<List<CountryDto>>
+                {
+                    CurrentPage = page,
+                    PageSize = pageSize,
+                    TotalItems = totalRows,
+                    TotalPages = (int)Math.Ceiling((double)totalRows / pageSize),
+                    Items = countriesDtos,
+                    HasPreviousPage = page > 1,
+                    HasNextPage = startIndex + pageSize < PAGE_SIZE_LIMIT && page < (int)Math
+                    .Ceiling((double)totalRows / pageSize),
+                }
             };
         }
+
 
         public async Task<ResponseDto<CountryDto>> GetOneByIdAsync(Guid id)
         {

@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using Persons.API.Constants;
 using Persons.API.Dtos.Common;
 using Persons.API.Dtos.Countries;
+using Persons.API.Services;
 using Persons.API.Services.Interfaces;
 
 namespace Persons.API.Controllers
@@ -19,9 +20,11 @@ namespace Persons.API.Controllers
         }
 
         [HttpGet]
-        public async Task<ActionResult<ResponseDto<List<CountryDto>>>> GetList()
+        public async Task<ActionResult<ResponseDto<List<CountryDto>>>> 
+            GetList(string searchTerm = "", int page = 1, int pageSize = 0)
         {
-            var response = await _countriesServices.GetListAsync();
+            //var response = await _countriesServices.GetListAsync();
+            var response = await _countriesServices.GetListAsync(searchTerm, page, pageSize);
 
             return StatusCode(response.StatusCode, new
             {
