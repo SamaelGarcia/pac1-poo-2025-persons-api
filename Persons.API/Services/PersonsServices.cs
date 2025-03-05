@@ -13,16 +13,39 @@ namespace Persons.API.Services
     {
         private readonly PersonsDbContext _context;
         private readonly IMapper _mapper;
+        private readonly int PAGE_SIZE;
+        private readonly int PAGE_SIZE_LIMIT;
 
-        public PersonsServices(PersonsDbContext context, IMapper mapper)
+        public PersonsServices(PersonsDbContext context, IMapper mapper,
+            IConfiguration configuration)
         {
             _context = context;
             _mapper = mapper;
+            PAGE_SIZE = configuration.GetValue<int>("PageSize");
+            PAGE_SIZE_LIMIT = configuration.GetValue<int>("PageSizeLimit");
         }
 
-        public async Task<ResponseDto<List<PersonDto>>> GetListAsync()
+        public async Task<ResponseDto<PaginationDto<List<PersonDto>>>> GetListAsync(
+            string searchTerm = "", int page = 1, int pageSize = 0
+            )
         {
-            var personEntity = await _context.Persons.ToListAsync();
+            pageSize = pageSize == 0 ? PAGE_SIZE : pageSize;
+            int startIndex = (page - 1) * pageSize;
+            IQueryable<PersonEntity> personQuery = _context.Persons;
+            if (!string.IsNullOrEmpty(searchTerm))
+            {
+                personQuery = personQuery.
+                    Where(x => (x.DNI + " " + x.FirstName + " " + x.LastName).Contains(searchTerm));
+            }
+
+            int totalRows = await personQuery.CountAsync();
+            var personsEntity = await personQuery
+                .OrderBy(x => x.FirstName)
+                .Skip(startIndex)
+                .Take(pageSize)
+                .ToListAsync();
+
+            //var personEntity = await _context.Persons.ToListAsync();
 
             //var personsDto = new List<PersonDto>();
             //foreach (var person in personEntity)
@@ -37,14 +60,25 @@ namespace Persons.API.Services
             //    });
             //}
 
-            var personsDto = _mapper.Map<List<PersonDto>>(personEntity);
+            var personsDto = _mapper.Map<List<PersonDto>>(personsEntity);
 
-            return new ResponseDto<List<PersonDto>>
+            return new ResponseDto<PaginationDto<List<PersonDto>>>
             {
                 StatusCode = HttpStatusCode.OK,
                 Status = true,
-                Message = personEntity.Count() > 0 ? "Registros Encontrados" : "No se encontraron registros",
-                Data = personsDto
+                Message = personsEntity.
+                Count() > 0 ? "Registros Encontrados" : "No se encontraron registros",
+                Data = new PaginationDto<List<PersonDto>>
+                {
+                    CurrentPage = page,
+                    PageSize = pageSize,
+                    TotalItems = totalRows,
+                    TotalPages = (int)Math.Ceiling((double)totalRows / pageSize),
+                    Items = personsDto,
+                    HasPreviousPage = page > 1,
+                    HasNextPage = startIndex + pageSize < PAGE_SIZE_LIMIT && page < (int)Math
+                    .Ceiling((double)totalRows/pageSize),
+                }
             };
         }
 
